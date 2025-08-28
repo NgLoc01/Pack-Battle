@@ -1,0 +1,10 @@
+.pack-images {
+    display: flex;            /* Arranges images in a row */
+    justify-content: center;  /* Centers the row of images */
+    flex-wrap: wrap;          /* If too many images, wrap to next line */
+    gap: 10px;                /* 10px space between each image */
+}
+.pack-images img {/* Each individual image */
+    width: 120px;             /* All images are 120px wide */
+    border-radius: 5px;       /* Slightly rounded corners */
+}
