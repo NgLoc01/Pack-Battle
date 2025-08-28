@@ -1,3 +1,16 @@
+body { /* The whole screen */
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    text-align: center;
+    background-color: #e1e4e8;
+}
+
+h1 {
+    font-size: 2rem; /* Make it bigger */
+    text-align: center;
+    margin-top: 0.5em;
+}
+
 .pack-images {
     display: flex;            /* Arranges images in a row */
     justify-content: center;  /* Centers the row of images */
