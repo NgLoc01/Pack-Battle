@@ -42,6 +42,7 @@ h1 {
     margin-bottom: 15px; /* Space between the text and images */
 }
 
+
 .pack-images {
     display: flex;            /* Arranges images in a row */
     justify-content: center;  /* Centers the row of images */
@@ -52,3 +53,6 @@ h1 {
     width: 120px;             /* All images are 120px wide */
     border-radius: 5px;       /* Slightly rounded corners */
 }
+
+
+

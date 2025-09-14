@@ -1,9 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Pack Battle</title>
+
+    <!-- WebSocket libraries -->
+    <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+
+    <!-- External CSS -->
     <link rel="stylesheet" href="/css/index.css">
 
+   <!-- Body ontop of body in CSS -->
     <style>
         body {
             background: url('/images/indexBackground.jpg'); 
@@ -26,7 +34,6 @@
             <img src="/images/bloomburrow.png" alt="Bloomburrow" />
         </div>
     </div>
-
 
     <!-- Universes Beyond Room -->
     <div id="clickable-roomCard-universesBeyondRoom" onclick="joinRoom('universesBeyondRoom')" class="clickable-roomCard">

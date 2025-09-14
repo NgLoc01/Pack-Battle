@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="'Room: ' + ${roomName}">Room</title>
+  <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+  <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+  <link rel="stylesheet" href="/css/rooms.css">
+
+  <style>
+      body {
+          background: url('/images/ubBackground.jpg');
+          background-size: cover;
+      }
+  </style>
+
+</head>
+<body>
+  <h2 th:text="'Welcome to the Universes Beyond room!'">Loading...</h2>
+  <p id="universesBeyondRoom-user-count">Users connected: 0 / 2</p>
+  <a href="#" onclick="leaveRoom('universesBeyondRoom')">Back</a>
+
+  <div class="grid-layout">
+    <div id="left-column">
+      <p class="pack-title">Choose 2 packs</p>
+      <div class="pack-images">
+        <button class="pack-button" onclick="handlePackClick('assasinscreed')" data-pack="assasinscreed">
+          <img src="/images/assasinscreed.png" alt="Assassin's Creed" />
+        </button>
+        <button class="pack-button" onclick="handlePackClick('drwho')" data-pack="drwho">
+          <img src="/images/drwho.png" alt="Doctor Who" />
+        </button>
+        <button class="pack-button" onclick="handlePackClick('lotr')" data-pack="lotr">
+          <img src="/images/lotr.png" alt="Lord of the Rings" />
+        </button>
+        <button class="pack-button" onclick="handlePackClick('finalfantasy')" data-pack="finalfantasy">
+          <img src="/images/finalfantasy.png" alt="Final Fantasy" />
+        </button>
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div class="box money-box">
+        <span class="money-you">You: $0</span>
+        <span class="money-opponent">Opponent: $0</span>
+      </div>
+
+      <div class="box top-right-box" id="selected-pack-box-1">
+        <p>Select a pack to see it here</p>
+      </div>
+
+      <div class="box bottom-right-box" id="selected-pack-box-2">
+        <p>Select a pack to see it here</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup Modal -->
+  <div id="packActionModal">
+    <div class="modal-content">
+      <p id="modal-pack-name">What would you like to do with this pack?</p>
+      <button onclick="confirmPackAction('open')">Open</button>
+      <button onclick="confirmPackAction('remove')">Remove</button>
+      <button onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="/js/scripts.js"></script>
+  <script src="/js/rooms.js"></script>
+</body>
+</html>

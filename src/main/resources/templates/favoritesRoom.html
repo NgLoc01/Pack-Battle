@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Room: ' + ${roomName}">Room</title>
+
+     <!-- WebSocket libraries -->
+    <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="/css/rooms.css">
+
+    <style>
+        body {
+            background: url('/images/favoritesBackground.jpg'); 
+            background-size: cover;
+        }
+    </style>
+
+</head>
+<body>
+    <h2 th:text="'Welcome to the Favorites room!'">Loading...</h2>
+    <p id="favoritesRoom-user-count">Users connected: 0 / 2</p>
+    <a href="#" onclick="leaveRoom('favoritesRoom')">Back</a>
+
+    <div class="grid-layout">
+        <div id="left-column">
+        <p class="pack-title">Choose 2 packs</p>
+        <div class="pack-images">
+            <button class="pack-button" onclick="handlePackClick('mh3')" data-pack="mh3">
+            <img src="/images/MH3.png" alt="Assassin's Creed" />
+            </button>
+            <button class="pack-button" onclick="handlePackClick('foundations')" data-pack="foundations">
+            <img src="/images/foundations.webp" alt="Doctor Who" />
+            </button>
+            <button class="pack-button" onclick="handlePackClick('duskmourn')" data-pack="duskmourn">
+            <img src="/images/duskmourn.png" alt="Lord of the Rings" />
+            </button>
+            <button class="pack-button" onclick="handlePackClick('bloomburrow')" data-pack="bloomburrow">
+            <img src="/images/bloomburrow.png" alt="Final Fantasy" />
+            </button>
+        </div>
+        </div>
+
+    <div class="right-column">
+      <div class="box money-box">
+        <span class="money-you">You: $0</span>
+        <span class="money-opponent">Opponent: $0</span>
+      </div>
+
+      <div class="box top-right-box" id="selected-pack-box-1">
+        <p>Select a pack to see it here</p>
+      </div>
+
+      <div class="box bottom-right-box" id="selected-pack-box-2">
+        <p>Select a pack to see it here</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup Modal -->
+  <div id="packActionModal">
+    <div class="modal-content">
+      <p id="modal-pack-name">What would you like to do with this pack?</p>
+      <button onclick="confirmPackAction('open')">Open</button>
+      <button onclick="confirmPackAction('remove')">Remove</button>
+      <button onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+    <!-- External JavaScript -->
+    <script src="/js/scripts.js"></script>
+    <script src="/js/rooms.js"></script>
+    
+</body>
+</html>
