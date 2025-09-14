@@ -7,40 +7,73 @@ const rooms = ["favoritesRoom", "universesBeyondRoom"];
 
 stompClient.connect({}, function(frame) { 
     console.log('Connected: ' + frame);
-
-    // Extract session ID using your original method but with better error handling
-    let rawSessionId = null;
-    try {
-        if (socket._transport && socket._transport.url) {
-            const urlParts = socket._transport.url.split('/');
-            rawSessionId = urlParts[urlParts.length - 2]; // Second to last part
-            console.log("Extracted session ID:", rawSessionId);
-        }
-    } catch (error) {
-        console.error("Could not extract session ID from URL:", error);
-    }
-
-    if (rawSessionId) {
-        // Subscribe to get confirmation from server
-        stompClient.subscribe(`/topic/session/${rawSessionId}`, function(message) { 
-            const receivedSessionId = message.body;
-            console.log('✅ Server confirmed session ID:', receivedSessionId);
-            sessionStorage.setItem("sessionId", receivedSessionId);
-            stompSessionId = receivedSessionId;
-        });
+    
+    // Get session ID from STOMP frame headers - more reliable method
+    stompSessionId = frame.headers['session'];
+    console.log("Session ID from frame:", stompSessionId);
+    
+    if (stompSessionId) {
+        sessionStorage.setItem("sessionId", stompSessionId);
+        console.log('✅ Session ID stored:', stompSessionId);
+        
+        // Set up subscriptions immediately since we have the session ID
+        setupOtherSubscriptions();
     } else {
-        console.error("Failed to extract session ID - WebSocket may not work properly");
+        console.error("Failed to get session ID from STOMP frame");
+        // Fallback: wait for server to send session ID
+        waitForServerSessionId();
     }
-
-    // Set up other subscriptions
-    setupOtherSubscriptions();
     
 }, function(error) {
     console.error('STOMP connection error:', error);
     alert('Connection failed. Please refresh the page.');
 });
 
+function waitForServerSessionId() {
+    // Fallback method - wait for server confirmation
+    console.log("Waiting for server to send session ID...");
+    
+    // Create a temporary subscription to catch any session ID broadcast
+    const tempSub = stompClient.subscribe('/topic/session-broadcast', function(message) {
+        const receivedSessionId = message.body;
+        console.log('✅ Server sent session ID:', receivedSessionId);
+        sessionStorage.setItem("sessionId", receivedSessionId);
+        stompSessionId = receivedSessionId;
+        
+        // Clean up temp subscription
+        tempSub.unsubscribe();
+        
+        // Now set up other subscriptions
+        setupOtherSubscriptions();
+    });
+    
+    // Also try the original method as additional fallback
+    setTimeout(() => {
+        if (!stompSessionId) {
+            console.log("Trying original session ID extraction method...");
+            let rawSessionId = null;
+            try {
+                if (socket._transport && socket._transport.url) {
+                    const urlParts = socket._transport.url.split('/');
+                    rawSessionId = urlParts[urlParts.length - 2];
+                    console.log("Extracted session ID from URL:", rawSessionId);
+                }
+            } catch (error) {
+                console.error("Could not extract session ID from URL:", error);
+            }
+            
+            if (rawSessionId && !stompSessionId) {
+                stompSessionId = rawSessionId;
+                sessionStorage.setItem("sessionId", rawSessionId);
+                setupOtherSubscriptions();
+            }
+        }
+    }, 1000);
+}
+
 function setupOtherSubscriptions() {
+    console.log("Setting up subscriptions with session ID:", stompSessionId);
+    
     //Subscribe to user count updates for each room
     rooms.forEach(roomName => {
         stompClient.subscribe(`/topic/${roomName}/count`, function(message) {
@@ -125,6 +158,7 @@ function joinRoom(roomName) {
         console.error("No session ID available");
         console.log("Session storage contents:", sessionStorage.getItem("sessionId"));
         console.log("STOMP connected:", stompClient?.connected);
+        console.log("STOMP session ID:", stompSessionId);
         
         alert("Connection not ready. Please wait a moment and try again.");
         return;

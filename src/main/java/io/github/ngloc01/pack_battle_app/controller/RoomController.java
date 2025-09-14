@@ -18,42 +18,76 @@ public class RoomController {
         this.messaging = messaging;
     }
 
-    @GetMapping("/room/{roomName}") //Call comes form window.location.href = `/room/${roomName}` and sends the user to the right room view
+    @GetMapping("/room/{roomName}")
     public String roomView(@PathVariable String roomName, Model model) {
-        model.addAttribute("roomName", roomName); //roomName is passed 
+        System.out.println("Room view requested for: " + roomName);
+        model.addAttribute("roomName", roomName);
 
         switch (roomName.toLowerCase()) {
             case "favoritesroom":
-                return "favoritesRoom"; //loads favoritesRoom.html
+                return "favoritesRoom";
             case "universesbeyondroom":
-                return "universesBeyondRoom";//loads universesBeyondRoom.html
+                return "universesBeyondRoom";
             default:
-                return "error"; // fallback view
+                System.out.println("Unknown room requested: " + roomName);
+                return "error";
         }
     }
 
-    @PostMapping("/room/{roomName}/join") //Join a room, call comes from joinRoom in  JavaScript(client) and delegates to RoomManager
+    @PostMapping("/room/{roomName}/join")
     @ResponseBody
     public ResponseEntity<?> joinRoom(@PathVariable String roomName, @RequestParam String sessionId) {
+        System.out.println("Join request - Room: " + roomName + ", SessionId: " + sessionId);
+        
+        // Validate session ID
+        if (sessionId == null || sessionId.trim().isEmpty()) {
+            System.out.println("Invalid session ID provided: " + sessionId);
+            return ResponseEntity.badRequest().body("Invalid session ID");
+        }
+        
         boolean success = roomManager.tryJoin(roomName, sessionId);
         int count = roomManager.userCount(roomName);
-        messaging.convertAndSend("/topic/" + roomName + "/count", count); //Notify all subscribers of the new user count
-        return success ? ResponseEntity.ok().build() : ResponseEntity.status(HttpStatus.FORBIDDEN).body("Room full"); 
+        
+        System.out.println("Join result - Success: " + success + ", Count: " + count);
+        
+        // Notify all subscribers of the new user count
+        messaging.convertAndSend("/topic/" + roomName + "/count", count);
+        
+        if (success) {
+            return ResponseEntity.ok().build();
+        } else {
+            System.out.println("Room full - rejecting join request");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Room full");
+        }
     }
 
-    @PostMapping("/room/{roomName}/leave") //Leave a room, call comes from leaveRoom in JavaScript(client) and delegates to RoomManager
+    @PostMapping("/room/{roomName}/leave")
     @ResponseBody
     public ResponseEntity<?> leaveRoom(@PathVariable String roomName, @RequestParam String sessionId) {
+        System.out.println("Leave request - Room: " + roomName + ", SessionId: " + sessionId);
+        
         roomManager.leave(roomName, sessionId);
         int count = roomManager.userCount(roomName);
-        messaging.convertAndSend("/topic/" + roomName + "/count", count); //Notify all subscribers of the new user count
+        
+        System.out.println("Leave result - Count: " + count);
+        
+        // Notify all subscribers of the new user count
+        messaging.convertAndSend("/topic/" + roomName + "/count", count);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/api/room/{roomName}/count") //Get the user count for a room, call comes from javaScript(client)
+    @GetMapping("/api/room/{roomName}/count")
     @ResponseBody
     public int getRoomUserCount(@PathVariable String roomName) {
-        return roomManager.userCount(roomName);
+        int count = roomManager.userCount(roomName);
+        System.out.println("Count request - Room: " + roomName + ", Count: " + count);
+        return count;
+    }
+    
+    // Debug endpoint to check room status
+    @GetMapping("/api/debug/rooms")
+    @ResponseBody
+    public ResponseEntity<?> debugRooms() {
+        return ResponseEntity.ok(roomManager.debugInfo());
     }
 }
-

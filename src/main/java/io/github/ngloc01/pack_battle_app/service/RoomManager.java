@@ -2,6 +2,7 @@ package io.github.ngloc01.pack_battle_app.service;
 
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,32 +10,64 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RoomManager {
     private final Map<String, Set<String>> rooms = new ConcurrentHashMap<>();
-    /*
-     * Example structure of rooms map:
-     * "favoritesRoom": [ "sess-abc123", "sess-def456" ],
-     * "universesBeyondRoom": [ "sess-xyz789" ]
-     */
-   
+    
     public synchronized boolean tryJoin(String roomName, String sessionId) {
+        System.out.println("tryJoin called - Room: " + roomName + ", Session: " + sessionId);
+        
         rooms.putIfAbsent(roomName, ConcurrentHashMap.newKeySet());
-        Set<String> users = rooms.get(roomName); // Get or create the set of users for the room
-        if (users.size() >= 2) return false;
-        users.add(sessionId); // Add the session ID to the room
+        Set<String> users = rooms.get(roomName);
+        
+        // Check if user is already in the room
+        if (users.contains(sessionId)) {
+            System.out.println("User already in room: " + sessionId);
+            return true; // Already joined, consider it successful
+        }
+        
+        if (users.size() >= 2) {
+            System.out.println("Room full - Current users: " + users);
+            return false;
+        }
+        
+        users.add(sessionId);
+        System.out.println("User added to room. Current users: " + users);
         return true;
     }
 
     public synchronized void leave(String roomName, String sessionId) {
-        Set<String> users = rooms.get(roomName); // Get the set of users for the room
+        System.out.println("leave called - Room: " + roomName + ", Session: " + sessionId);
+        
+        Set<String> users = rooms.get(roomName);
         if (users != null) {
-            users.remove(sessionId);    // Remove the session ID from the room
-            if (users.isEmpty()) {      // If the room is empty, remove it from the rooms hashmap
-                rooms.remove(roomName); // Clean up empty rooms
+            boolean removed = users.remove(sessionId);
+            System.out.println("User removal result: " + removed + ", Remaining users: " + users);
+            
+            if (users.isEmpty()) {
+                rooms.remove(roomName);
+                System.out.println("Room removed as it's empty: " + roomName);
             }
+        } else {
+            System.out.println("Room not found: " + roomName);
         }
     }
 
     public synchronized int userCount(String roomName) {
-        return rooms.getOrDefault(roomName, Set.of()).size();
+        int count = rooms.getOrDefault(roomName, Set.of()).size();
+        System.out.println("userCount called - Room: " + roomName + ", Count: " + count);
+        return count;
+    }
+    
+    // Debug method to see current room state
+    public synchronized Map<String, Object> debugInfo() {
+        Map<String, Object> debug = new HashMap<>();
+        
+        for (Map.Entry<String, Set<String>> entry : rooms.entrySet()) {
+            Map<String, Object> roomInfo = new HashMap<>();
+            roomInfo.put("users", entry.getValue());
+            roomInfo.put("count", entry.getValue().size());
+            debug.put(entry.getKey(), roomInfo);
+        }
+        
+        System.out.println("Debug info requested: " + debug);
+        return debug;
     }
 }
-
