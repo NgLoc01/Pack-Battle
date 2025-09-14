@@ -24,7 +24,7 @@ public class WebSocketEventListener {
         // Delay sending the session ID to give the client time to subscribe
         new Thread(() -> {
             try {
-                Thread.sleep(200); // Wait 200ms to avoid race condition
+                Thread.sleep(2000); // Wait 2000ms to avoid race condition
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
