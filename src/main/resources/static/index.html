@@ -10,22 +10,37 @@
             background-size: cover;
         }
     </style>
-    
+
 </head>
 <body>
     <h1>Pack Battle!</h1>
+
+    <!-- Favorites Room -->
+    <div id="clickable-roomCard-favoritesRoom" onclick="joinRoom('favoritesRoom')" class="clickable-roomCard">
+        <p class="room-title">My Favorites Room</p>
+        <p id="favoritesRoom-user-count">Users connected: 0 / 2</p>
         <div class="pack-images">
             <img src="/images/MH3.png" alt="Modern Horizons 3" />
             <img src="/images/foundations.webp" alt="Foundations" />
             <img src="/images/duskmourn.png" alt="Duskmourn" />
             <img src="/images/bloomburrow.png" alt="Bloomburrow" />
         </div>
+    </div>
 
+
+    <!-- Universes Beyond Room -->
+    <div id="clickable-roomCard-universesBeyondRoom" onclick="joinRoom('universesBeyondRoom')" class="clickable-roomCard">
+        <p class="room-title">Universes Beyond Room</p>
+        <p id="universesBeyondRoom-user-count">Users connected: 0 / 2</p>
         <div class="pack-images">
             <img src="/images/assasinscreed.png" alt="Assassin's Creed" />
             <img src="/images/drwho.png" alt="Doctor Who"/>
             <img src="/images/lotr.png" alt="Lord of the Rings" />
             <img src="/images/finalfantasy.png" alt="Final Fantasy" />
         </div>
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="/js/scripts.js"></script>
 </body>
 </html>

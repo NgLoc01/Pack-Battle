@@ -11,6 +11,37 @@ h1 {
     margin-top: 0.5em;
 }
 
+.clickable-roomCard { /* The two clickable cards */
+    display: flex;                                  /* Flexbox for layout */
+    flex-direction: column;                         /* Stack items vertically */
+    align-items: center;                            /* Center items horizontally */
+    justify-content: center;                        /* Center items vertically */
+    width: 100%;                                    /* Full width of the container */
+    max-width: 900px;                               /* Maximum width for the cards */
+    margin: 0 auto 50px;                            /* Center the cards and add space below */
+    padding: 20px;                                  /* Space inside the card */
+    border-radius: 10px;                            /* Rounded corners */
+    background-color: rgb(225, 220, 220);         /* White background for the cards */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);        /* Subtle shadow for depth */
+    cursor: pointer;                                /* Pointer cursor on hover */
+    transition: transform 0.2s, box-shadow 0.2s;    /* Smooth transition for hover effects */
+}
+.clickable-roomCard:hover { /* Hover effect for the cards */
+    transform: scale(1.02);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+}
+.clickable-roomCard p {  /* Text inside the room card */
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 15px;   /* Space between the text and images */
+}
+.clickable-roomCard .room-title { /* Title for the room */
+    font-size: 40px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px; /* Space between the text and images */
+}
+
 .pack-images {
     display: flex;            /* Arranges images in a row */
     justify-content: center;  /* Centers the row of images */
