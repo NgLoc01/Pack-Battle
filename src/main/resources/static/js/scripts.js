@@ -5,75 +5,33 @@ const stompClient = Stomp.over(socket);
 let stompSessionId = null;
 const rooms = ["favoritesRoom", "universesBeyondRoom"];
 
+
 stompClient.connect({}, function(frame) { 
     console.log('Connected: ' + frame);
-    
-    // Get session ID from STOMP frame headers - more reliable method
-    stompSessionId = frame.headers['session'];
-    console.log("Session ID from frame:", stompSessionId);
-    
-    if (stompSessionId) {
-        sessionStorage.setItem("sessionId", stompSessionId);
-        console.log('✅ Session ID stored:', stompSessionId);
-        
-        // Set up subscriptions immediately since we have the session ID
-        setupOtherSubscriptions();
-    } else {
-        console.error("Failed to get session ID from STOMP frame");
-        // Fallback: wait for server to send session ID
-        waitForServerSessionId();
-    }
-    
-}, function(error) {
-    console.error('STOMP connection error:', error);
-    alert('Connection failed. Please refresh the page.');
-});
 
-function waitForServerSessionId() {
-    // Fallback method - wait for server confirmation
-    console.log("Waiting for server to send session ID...");
-    
-    // Create a temporary subscription to catch any session ID broadcast
-    const tempSub = stompClient.subscribe('/topic/session-broadcast', function(message) {
+     try {
+        const rawSessionId = socket._transport?.url?.split('/').slice(-2, -1)[0];
+        if (!rawSessionId || rawSessionId.length < 5) {
+        console.warn('Invalid session ID extracted, using fallback');
+        // Use fallback logic here
+        }
+    } catch (error) {
+        console.error('Failed to extract session ID:', error);
+        // Fallback logic
+    }
+
+
+    //const rawSessionId = socket._transport.url.split('/').slice(-2, -1)[0]; // Extract the raw session ID from the SockJS URL
+    //console.log("WebSocket raw sessionId (SockJS URL):", rawSessionId);
+
+    //Subscribe to the session topic to receive the session ID from the server (WebSocketEventListener.java)
+    stompClient.subscribe(`/topic/session/${rawSessionId}`, function(message) { 
         const receivedSessionId = message.body;
-        console.log('✅ Server sent session ID:', receivedSessionId);
+        console.log('✅ Received session ID from server:', receivedSessionId);
         sessionStorage.setItem("sessionId", receivedSessionId);
         stompSessionId = receivedSessionId;
-        
-        // Clean up temp subscription
-        tempSub.unsubscribe();
-        
-        // Now set up other subscriptions
-        setupOtherSubscriptions();
     });
-    
-    // Also try the original method as additional fallback
-    setTimeout(() => {
-        if (!stompSessionId) {
-            console.log("Trying original session ID extraction method...");
-            let rawSessionId = null;
-            try {
-                if (socket._transport && socket._transport.url) {
-                    const urlParts = socket._transport.url.split('/');
-                    rawSessionId = urlParts[urlParts.length - 2];
-                    console.log("Extracted session ID from URL:", rawSessionId);
-                }
-            } catch (error) {
-                console.error("Could not extract session ID from URL:", error);
-            }
-            
-            if (rawSessionId && !stompSessionId) {
-                stompSessionId = rawSessionId;
-                sessionStorage.setItem("sessionId", rawSessionId);
-                setupOtherSubscriptions();
-            }
-        }
-    }, 1000);
-}
 
-function setupOtherSubscriptions() {
-    console.log("Setting up subscriptions with session ID:", stompSessionId);
-    
     //Subscribe to user count updates for each room
     rooms.forEach(roomName => {
         stompClient.subscribe(`/topic/${roomName}/count`, function(message) {
@@ -82,19 +40,16 @@ function setupOtherSubscriptions() {
         });
     });
 
+    
     stompClient.subscribe(`/topic/rooms/pack-picks`, function(message) {
         const pickedPack = message.body;
-        console.log("📦 Opponent picked:", pickedPack);
-        if (typeof disablePackButton !== 'undefined') {
-            disablePackButton(pickedPack);
-        }
+        console.log("🔄 Opponent picked:", pickedPack);
+        disablePackButton(pickedPack); // disables the pack on both sides
     });
 
     stompClient.subscribe(`/topic/rooms/pack-unpicks`, function (message) {
-        const packName = message.body;
-        if (typeof enablePackButton !== 'undefined') {
-            enablePackButton(packName);
-        }
+      const packName = message.body;
+      enablePackButton(packName);
     });
 
     // Subscribe to money updates for current room only
@@ -103,21 +58,16 @@ function setupOtherSubscriptions() {
         stompClient.subscribe(`/topic/${currentRoom}/money`, function(message) {
             const update = JSON.parse(message.body);
 
+            // Determine who is "you" based on sessionId
             const myId = sessionStorage.getItem("sessionId")?.trim();
             const isYou = myId && update.sessionId && update.sessionId === myId;
 
-            const youElement = document.querySelector(".money-you");
-            const opponentElement = document.querySelector(".money-opponent");
-            
-            if (youElement) {
-                youElement.textContent = `You: $${isYou ? update.yourMoney : update.opponentMoney}`;
-            }
-            if (opponentElement) {
-                opponentElement.textContent = `Opponent: $${isYou ? update.opponentMoney : update.yourMoney}`;
-            }
+            document.querySelector(".money-you").textContent = `You: $${isYou ? update.yourMoney : update.opponentMoney}`;
+            document.querySelector(".money-opponent").textContent = `Opponent: $${isYou ? update.opponentMoney : update.yourMoney}`;
         });
     }
-}
+
+});
 
 // Get the current room name from the URL path
 function getCurrentRoomName() {
@@ -127,70 +77,62 @@ function getCurrentRoomName() {
 }
 
 // Fetch current user counts on page load
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => { // Ensure the content is fully loaded before fetching counts
     rooms.forEach(fetchUserCount);
 });
 
-function fetchUserCount(roomName) {
-    fetch(`/api/room/${roomName}/count`)
+function fetchUserCount(roomName) { // Fetch the user count for a specific room
+    fetch(`/api/room/${roomName}/count`) //fetches from getRoomUserCount in RoomController.java
         .then(res => res.json())
-        .then(count => updateUserCountDisplay(roomName, count))
-        .catch(error => console.error('Error fetching user count:', error));
+        .then(count => updateUserCountDisplay(roomName, count));
 }
 
-function updateUserCountDisplay(roomName, count) {
+
+function updateUserCountDisplay(roomName, count) {  // Update the user count display and room card state
     const display = document.getElementById(`${roomName}-user-count`);
-    const roomCard = document.getElementById(`clickable-roomCard-${roomName}`);
+
+    const roomCard = document.getElementById(`clickable-roomCard-${roomName}`); // User count from index   
+    const leftColumn = document.getElementById("left-column");                  // User count from other rooms
 
     if (!display) return;
-    display.textContent = `Users connected: ${count} / 2`;
+    display.textContent = `Users connected: ${count} / 2`; //always try too display users
 
-    if (roomCard) {
+    if (roomCard) { //Only for index page, make unclickable if count >= 2
         roomCard.style.pointerEvents = count >= 2 ? "none" : "auto";
         roomCard.style.opacity = count >= 2 ? 0.5 : 1;
+    } else if (leftColumn) { //Do nothing for other pages
+        // Do nothing – don't touch left-column!
     }
 }
 
-function joinRoom(roomName) {
+
+function joinRoom(roomName) { //call for joinRoom comes from html with room parameter and continues to joinRoom in RoomController.java
     const sessionId = sessionStorage.getItem("sessionId")?.trim();
-    
     if (!sessionId) {
-        console.error("No session ID available");
-        console.log("Session storage contents:", sessionStorage.getItem("sessionId"));
-        console.log("STOMP connected:", stompClient?.connected);
-        console.log("STOMP session ID:", stompSessionId);
-        
-        alert("Connection not ready. Please wait a moment and try again.");
+        alert("No session ID yet. Please wait.");
         return;
     }
 
-    console.log("Attempting to join room with session ID:", sessionId);
-
-    fetch(`/room/${roomName}/join?sessionId=${encodeURIComponent(sessionId)}`, {
+    fetch(`/room/${roomName}/join?sessionId=${encodeURIComponent(sessionId)}`, { //fetches from joinRoom in RoomController.java
         method: 'POST'
     }).then(res => {
         if (res.ok) {
             sessionStorage.setItem("joinedSessionId", sessionId);
             window.location.href = `/room/${roomName}`;
         } else {
-            return res.text().then(text => {
-                throw new Error(text || "Room is full");
-            });
+            alert("Room is full.");
         }
-    }).catch(error => {
-        console.error('Error joining room:', error);
-        alert(error.message || "Failed to join room. Please try again.");
     });
 }
 
-function leaveRoom(roomName) {
+function leaveRoom(roomName) { //call for leaveRoom comes from html with room parameter and continues to leaveRoom in RoomController.java
     const sessionId = sessionStorage.getItem("joinedSessionId")?.trim();
     if (!sessionId) {
         alert("You haven't joined this room in this session.");
         return;
     }
 
-    fetch(`/room/${roomName}/leave?sessionId=${encodeURIComponent(sessionId)}`, {
+    fetch(`/room/${roomName}/leave?sessionId=${encodeURIComponent(sessionId)}`, { //fetches from leaveRoom in RoomController.java
         method: 'POST'
     }).then(res => {
         if (res.ok) {
@@ -200,8 +142,6 @@ function leaveRoom(roomName) {
         } else {
             alert("Failed to leave the room.");
         }
-    }).catch(error => {
-        console.error('Error leaving room:', error);
-        alert("Failed to leave room.");
     });
 }
+
