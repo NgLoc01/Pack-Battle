@@ -28,7 +28,7 @@ public class WebSocketEventListener {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            messagingTemplate.convertAndSend("/topic/session/" + sessionId, sessionId); //scripts.js
+            messagingTemplate.convertAndSend("/topic/session/" + sessionId, sessionId);
         }).start();
     }
 
@@ -39,3 +39,4 @@ public class WebSocketEventListener {
     }  */
 
 }
+

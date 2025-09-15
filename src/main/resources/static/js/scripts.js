@@ -9,20 +9,8 @@ const rooms = ["favoritesRoom", "universesBeyondRoom"];
 stompClient.connect({}, function(frame) { 
     console.log('Connected: ' + frame);
 
-     try {
-        const rawSessionId = socket._transport?.url?.split('/').slice(-2, -1)[0];
-        if (!rawSessionId || rawSessionId.length < 5) {
-        console.warn('Invalid session ID extracted, using fallback');
-        // Use fallback logic here
-        }
-    } catch (error) {
-        console.error('Failed to extract session ID:', error);
-        // Fallback logic
-    }
-
-
-    //const rawSessionId = socket._transport.url.split('/').slice(-2, -1)[0]; // Extract the raw session ID from the SockJS URL
-    //console.log("WebSocket raw sessionId (SockJS URL):", rawSessionId);
+    const rawSessionId = socket._transport.url.split('/').slice(-2, -1)[0]; // Extract the raw session ID from the SockJS URL
+    console.log("WebSocket raw sessionId (SockJS URL):", rawSessionId);
 
     //Subscribe to the session topic to receive the session ID from the server (WebSocketEventListener.java)
     stompClient.subscribe(`/topic/session/${rawSessionId}`, function(message) { 
